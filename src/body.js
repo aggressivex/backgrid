@@ -44,6 +44,7 @@ var Body = Backgrid.Body = Backbone.View.extend({
     this.rows = this.collection.map(function (model) {
       var row = new this.row({
         columns: this.columns,
+        grid: options.grid,
         model: model
       });
 

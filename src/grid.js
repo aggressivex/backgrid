@@ -95,7 +95,7 @@ var Grid = Backgrid.Grid = Backbone.View.extend({
     this.header = new this.header(options);
 
     this.body = options.body || this.body;
-    this.body = new this.body(options);
+    this.body = new this.body(_.extend({grid: this}, options));
 
     this.footer = options.footer || this.footer;
     if (this.footer) {
