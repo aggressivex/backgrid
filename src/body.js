@@ -97,8 +97,9 @@ var Body = Backgrid.Body = Backbone.View.extend({
      - [Backbone.Collection#add](http://backbonejs.org/#Collection-add)
   */
   insertRow: function (model, collection, options) {
+    var rows = this.rows;
 
-    if (this.rows[0] instanceof EmptyRow) this.rows.pop().remove();
+    if (rows[0] instanceof EmptyRow) rows.pop().remove();
 
     // insertRow() is called directly
     if (!(collection instanceof Backbone.Collection) && !options) {
@@ -114,19 +115,12 @@ var Body = Backgrid.Body = Backbone.View.extend({
     });
 
     var index = collection.indexOf(model);
-    this.rows.splice(index, 0, row);
-
-    var $el = this.$el;
-    var $children = $el.children();
-    var $rowEl = row.render().$el;
+    rows.splice(index, 0, row);
 
     if (options.render) {
-      if (index >= $children.length) {
-        $el.append($rowEl);
-      }
-      else {
-        $children.eq(index).before($rowEl);
-      }
+      var el = this.el, rowEl = row.render().el, children = el.childNodes;
+      if (index >= children.length) el.appendChild(rowEl);
+      else el.insertBefore(rowEl, children[index]);
     }
   },
 
