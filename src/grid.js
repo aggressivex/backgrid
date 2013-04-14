@@ -157,8 +157,8 @@ var Grid = Backgrid.Grid = Backbone.View.extend({
 
   /**
      Renders the grid's header, then footer, then finally the body. Triggers a
-     Backbone `backgrid:rendered` event along with a reference to the grid when
-     the it has successfully been rendered.
+     Backbone `backgrid:rendered` event along with a reference to the
+     collection, columns and the grid when it has successfully been rendered.
    */
   render: function () {
     this.$el.empty();
@@ -173,21 +173,20 @@ var Grid = Backgrid.Grid = Backbone.View.extend({
 
     this.delegateEvents();
 
-    this.trigger("backgrid:rendered", this);
+    this.trigger("backgrid:rendered", this.collection, this.columns, this);
 
     return this;
   },
 
   /**
      Clean up this grid and its subviews.
-
-     @chainable
    */
   remove: function () {
-    this.header.remove.apply(this.header, arguments);
-    this.body.remove.apply(this.body, arguments);
-    this.footer && this.footer.remove.apply(this.footer, arguments);
-    return Backbone.View.prototype.remove.apply(this, arguments);
+    Backbone.View.prototype.remove.apply(this, arguments);
+    this.header.remove(arguments);
+    this.body.remove(arguments);
+    this.footer && this.footer.remove(arguments);
+    return this;
   }
 
 });

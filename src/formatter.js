@@ -100,7 +100,7 @@ _.extend(NumberFormatter.prototype, {
      @return {string}
   */
   fromRaw: function (number) {
-    if (_.isNull(number) || _.isUndefined(number)) return '';
+    if (number == null) return '';
 
     number = number.toFixed(~~this.decimals);
 
@@ -247,7 +247,7 @@ _.extend(DatetimeFormatter.prototype, {
      values are returned as is.
   */
   fromRaw: function (rawData) {
-    if (_.isNull(rawData) || _.isUndefined(rawData)) return '';
+    if (rawData == null) return '';
     return this._convert(rawData);
   },
 
@@ -291,7 +291,7 @@ _.extend(StringFormatter.prototype, {
      @return {string}
    */
   fromRaw: function (rawValue) {
-    if (_.isUndefined(rawValue) || _.isNull(rawValue)) return '';
+    if (rawValue == null) return '';
     return rawValue + '';
   }
 });

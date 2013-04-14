@@ -44,7 +44,7 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
     if (!(this.column instanceof Column)) {
       this.column = new Column(this.column);
     }
-    this.listenTo(Backbone, "backgrid:sort", this._resetCellDirection);
+    this.listenTo(this.collection, "backgrid:sort", this._resetCellDirection);
   },
 
   /**
@@ -174,7 +174,7 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
        @param {function(*, *): number} comparator A Backbone.Collection#comparator.
        @param {Backbone.Collection} collection
     */
-    Backbone.trigger("backgrid:sort", columnName, direction, comparator, this.collection);
+    collection.trigger("backgrid:sort", columnName, direction, comparator, collection);
   },
 
   /**
@@ -201,8 +201,12 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
    */
   render: function () {
     this.$el.empty();
-    var $label = $("<a>").text(this.column.get("label")).append("<b class='sort-caret'></b>");
-    this.$el.append($label);
+    var a = document.createElement("a");
+    a.appendChild(document.createTextNode(this.column.get("label")));
+    var b = document.createElement("b");
+    b.className = "sort-caret";
+    a.appendChild(b);
+    this.el.appendChild(a);
     this.delegateEvents();
     return this;
   }
@@ -286,7 +290,8 @@ var Header = Backgrid.Header = Backbone.View.extend({
      Renders this table head with a single row of header cells.
    */
   render: function () {
-    this.$el.append(this.row.render().$el);
+    this.$el.empty();
+    this.el.appendChild(this.row.render().el);
     this.delegateEvents();
     return this;
   },

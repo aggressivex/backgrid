@@ -52,9 +52,9 @@ var Backgrid = root.Backgrid = {
   Extension: {},
 
   requireOptions: function (options, requireOptionKeys) {
-    for (var i = 0; i < requireOptionKeys.length; i++) {
+    for (var i = 0, l = requireOptionKeys.length; i < l; i++) {
       var key = requireOptionKeys[i];
-      if (_.isUndefined(options[key])) {
+      if (options[key] === void 0) {
         throw new TypeError("'" + key  + "' is required");
       }
     }

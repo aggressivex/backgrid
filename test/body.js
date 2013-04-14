@@ -131,11 +131,11 @@ describe("A Body", function () {
     var handler = function () {
       eventFired = true;
     };
-    Backbone.on("backgrid:refresh", handler);
+    body.collection.on("backgrid:refresh", handler);
     body.collection.reset([{
       title: "Oliver Twist"
     }]);
-    Backbone.off("backgrid:refresh", handler);
+    body.collection.off("backgrid:refresh", handler);
     expect(eventFired).toBe(true);
     var $trs = body.$el.children();
     expect($trs.length).toBe(1);

@@ -40,42 +40,49 @@ var Row = Backgrid.Row = Backbone.View.extend({
     }
 
     var cells = this.cells = [];
-    for (var i = 0; i < columns.length; i++) {
-      cells.push(this.makeCell(columns.at(i), options));
+    for (var i = 0, l = columns.length; i < l; i++) {
+      cells.push(this.makeCell(columns.models[i], options));
     }
 
-    this.listenTo(columns, "change:renderable", function (column, renderable) {
-      for (var i = 0; i < cells.length; i++) {
-        var cell = cells[i];
-        if (cell.column.get("name") == column.get("name")) {
-          if (renderable) cell.$el.show(); else cell.$el.hide();
-        }
-      }
-    });
+    this.listenTo(columns, "change:renderable", this._onColumnChangeRenderable);
+    this.listenTo(columns, "add", this._onColumnAdd);
+    this.listenTo(columns, "remove", this._onColumnRemove);
+  },
 
-    this.listenTo(columns, "add", function (column, columns) {
-      var i = columns.indexOf(column);
-      var cell = this.makeCell(column, options);
-      cells.splice(i, 0, cell);
-
-      if (!cell.column.get("renderable")) cell.$el.hide();
-
-      var $el = this.$el;
-      if (i === 0) {
-        $el.prepend(cell.render().$el);
+  _onColumnChangeRenderable: function (column, renderable) {
+    var cells = this.cells;
+    for (var i = 0, l = cells.length; i < l; i++) {
+      var cell = cells[i];
+      if (cell.column.get("name") == column.get("name")) {
+        if (renderable) cell.$el.show(); else cell.$el.hide();
       }
-      else if (i === columns.length - 1) {
-        $el.append(cell.render().$el);
-      }
-      else {
-        $el.children().eq(i).before(cell.render().$el);
-      }
-    });
+    }
+  },
 
-    this.listenTo(columns, "remove", function (column, columns, opts) {
-      cells[opts.index].remove();
-      cells.splice(opts.index, 1);
-    });
+  _onColumnAdd: function (column, columns) {
+    var i = columns.indexOf(column);
+    var cells = this.cells;
+    var cell = this.makeCell(column, this.options);
+    cells.splice(i, 0, cell);
+
+    if (!cell.column.get("renderable")) cell.$el.hide();
+
+    var $el = this.$el;
+    if (i === 0) {
+      $el.prepend(cell.render().$el);
+    }
+    else if (i === columns.length - 1) {
+      $el.append(cell.render().$el);
+    }
+    else {
+      $el.children().eq(i).before(cell.render().$el);
+    }
+  },
+
+  _onColumnRemove: function (column, columns, opts) {
+    var cells = this.cells;
+    cells[opts.index].remove();
+    cells.splice(opts.index, 1);
   },
 
   /**
@@ -99,35 +106,41 @@ var Row = Backgrid.Row = Backbone.View.extend({
   /**
      Renders a row of cells for this row's model.
   */
-  render: function () {
-    this.$el.empty();
-
-    var fragment = document.createDocumentFragment();
-
-    for (var i = 0; i < this.cells.length; i++) {
-      var cell = this.cells[i];
-      fragment.appendChild(cell.render().el);
-      if (!cell.column.get("renderable")) cell.$el.hide();
+  render: function (model) {
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
     }
 
-    this.el.appendChild(fragment);
+    if (model && model != this.model) {
+      this.stopListening(this.model);
+      this.model = model;
+    }
 
-    this.delegateEvents();
+    var cells = this.cells;
+    var fragment = document.createDocumentFragment();
+    for (var i = 0, l = cells.length; i < l; i++) {
+      var cell = cells[i];
+      fragment.appendChild(cell.render(model).el);
+    }
+    el.appendChild(fragment);
+
+    if (this.events) this.delegateEvents();
 
     return this;
   },
 
   /**
      Clean up this row and its cells.
-
-     @chainable
   */
   remove: function () {
-    for (var i = 0; i < this.cells.length; i++) {
-      var cell = this.cells[i];
-      cell.remove.apply(cell, arguments);
+    Backbone.View.prototype.remove.apply(this, arguments);
+    var cells = this.cells;
+    for (var i = 0, l = cells.length; i < l; i++) {
+      cells[i].remove(arguments);
     }
-    return Backbone.View.prototype.remove.apply(this, arguments);
+    return this;
   }
 
 });
@@ -153,7 +166,7 @@ var EmptyRow = Backgrid.EmptyRow = Backbone.View.extend({
      @param {Object} options
      @param {string} options.emptyText
      @param {Backbone.Collection.<Backgrid.Column>|Array.<Backgrid.Column>|Array.<Object>} options.columns Column metadata.
-   */
+  */
   initialize: function (options) {
     Backgrid.requireOptions(options, ["emptyText", "columns"]);
 
@@ -170,9 +183,9 @@ var EmptyRow = Backgrid.EmptyRow = Backbone.View.extend({
     var td = document.createElement("td");
     td.setAttribute("colspan", this.columns.length);
     td.textContent = this.emptyText;
-
-    this.el.setAttribute("class", "empty");
     this.el.appendChild(td);
+
+    this.el.className = "empty";
 
     return this;
   }

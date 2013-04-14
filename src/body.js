@@ -53,11 +53,14 @@ var Body = Backgrid.Body = Backbone.View.extend({
     this.emptyText = options.emptyText;
     this._unshiftEmptyRowMayBe();
 
-    var collection = this.collection;
+    this._listenToCollection(this.collection);
+  },
+
+  _listenToCollection: function (collection) {
     this.listenTo(collection, "add", this.insertRow);
     this.listenTo(collection, "remove", this.removeRow);
-    this.listenTo(collection, "sort", this.refresh);
-    this.listenTo(collection, "reset", this.refresh);
+    this.listenTo(collection, "sort", this.render);
+    this.listenTo(collection, "reset", this.render);
     this.listenTo(collection, "backgrid:edited", this.moveToNextCell);
   },
 
@@ -169,64 +172,66 @@ var Body = Backgrid.Body = Backbone.View.extend({
   },
 
   /**
-     Reinitialize all the rows inside the body and re-render them. Triggers a
-     Backbone `backgrid:refresh` event along with the body instance as its event
-     parameter when done.
-  */
-  refresh: function () {
-    for (var i = 0; i < this.rows.length; i++) {
-      this.rows[i].remove();
-    }
-
-    this.rows = this.collection.map(function (model) {
-      var row = new this.row({
-        columns: this.columns,
-        model: model
-      });
-
-      return row;
-    }, this);
-    this._unshiftEmptyRowMayBe();
-
-    this.render();
-
-    Backbone.trigger("backgrid:refresh", this);
-
-    return this;
-  },
-
-  /**
      Renders all the rows inside this body. If the collection is empty and
      `options.emptyText` is defined and not null in the constructor, an empty
      row is rendered, otherwise no row is rendered.
   */
-  render: function () {
-    this.$el.empty();
+  render: function (collection) {
 
-    var fragment = document.createDocumentFragment();
-    for (var i = 0; i < this.rows.length; i++) {
-      var row = this.rows[i];
-      fragment.appendChild(row.render().el);
+    // console.time("empty rows");
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
     }
+    // console.timeEnd("empty rows");
 
+    // console.time("reset collection");
+    if (collection && collection != this.collection) {
+      this.stopListening(this.collection);
+      this.collection = collection;
+      this._listenToCollection(collection);
+    }
+    // console.timeEnd("reset collection");
+
+    // console.time("render rows");
+    var rows = this.rows, fragment = document.createDocumentFragment();
+    for (var i = 0, l = rows.length; i < l; i++) {
+      fragment.appendChild(rows[i].render(collection && collection.at(i)).el);
+    }
     this.el.appendChild(fragment);
+    // console.timeEnd("render rows");
 
-    this.delegateEvents();
+    // console.time("gc old rows");
+    if (this.rows.length != this.collection.length) {
+      for (var i = 0; i < this.rows.length - this.collection.length; i++) {
+        this.rows[this.rows.length - i - 1].remove();
+      }
+      this.rows.splice(collection.length - 1, this.rows.length - this.collection.length);
+    }
+    // console.timeEnd("gc old rows");
+
+    // console.time("redelegate events");
+    if (this.events) this.delegateEvents();
+    // console.timeEnd("redelegate events");
+
+    // console.time("trigger refresh event");
+    if (collection) collection.trigger("backgrid:refresh", this);
+    // console.timeEnd("trigger refresh event");
 
     return this;
   },
 
   /**
      Clean up this body and it's rows.
-
-     @chainable
   */
   remove: function () {
-    for (var i = 0; i < this.rows.length; i++) {
-      var row = this.rows[i];
-      row.remove.apply(row, arguments);
+    Backbone.View.prototype.remove.apply(this, arguments);
+    var rows = this.rows;
+    for (var i = 0, l = rows.length; i < l; i++) {
+      rows[i].remove(arguments);
     }
-    return Backbone.View.prototype.remove.apply(this, arguments);
+    return this;
   },
 
   /**

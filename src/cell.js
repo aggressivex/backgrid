@@ -230,19 +230,37 @@ var Cell = Backgrid.Cell = Backbone.View.extend({
     }
     this.formatter = Backgrid.resolveNameToClass(this.formatter, "Formatter");
     this.editor = Backgrid.resolveNameToClass(this.editor, "CellEditor");
-    this.listenTo(this.model, "change:" + this.column.get("name"), function () {
-      if (!this.$el.hasClass("editor")) this.render();
-    });
+    this.listenTo(this.model, "change:" + this.column.get("name"), this._onModelChangeAttribute);
+  },
+
+  _onModelChangeAttribute: function () {
+    if (!this.$el.hasClass("editor")) this.render();
   },
 
   /**
      Render a text string in a table cell. The text is converted from the
      model's raw value for this cell's column.
   */
-  render: function () {
-    this.$el.empty();
-    this.$el.text(this.formatter.fromRaw(this.model.get(this.column.get("name"))));
+  render: function (model) {
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
+    }
+
+    if (model && model != this.model) {
+      this.stopListening(this.model);
+      this.model = model;
+      this.listenTo(model, "change:" + this.column.get("name"), this._onModelChangeAttribute);
+    }
+
+    el.appendChild(document.createTextNode(this.formatter.fromRaw(
+      this.model.get(this.column.get("name")))));
+
+    if (!this.column.get("renderable")) this.$el.hide();
+
     this.delegateEvents();
+
     return this;
   },
 
@@ -315,15 +333,14 @@ var Cell = Backgrid.Cell = Backbone.View.extend({
 
   /**
      Clean up this cell.
-
-     @chainable
   */
   remove: function () {
+    Backbone.View.prototype.remove.apply(this, arguments);
     if (this.currentEditor) {
       this.currentEditor.remove.apply(this, arguments);
       delete this.currentEditor;
     }
-    return Backbone.View.prototype.remove.apply(this, arguments);
+    return this;
   }
 
 });
@@ -362,12 +379,13 @@ var UriCell = Backgrid.UriCell = Cell.extend({
   render: function () {
     this.$el.empty();
     var formattedValue = this.formatter.fromRaw(this.model.get(this.column.get("name")));
-    this.$el.append($("<a>", {
-      tabIndex: -1,
-      href: formattedValue,
-      title: formattedValue,
-      target: "_blank"
-    }).text(formattedValue));
+    var a = document.createElement("a");
+    a.tabIndex = -1;
+    a.href = formattedValue;
+    a.title = formattedValue;
+    a.target = "_blank";
+    a.appendChild(document.createTextNode(formattedValue));
+    this.el.appendChild(a);
     this.delegateEvents();
     return this;
   }
@@ -392,11 +410,12 @@ var EmailCell = Backgrid.EmailCell = StringCell.extend({
   render: function () {
     this.$el.empty();
     var formattedValue = this.formatter.fromRaw(this.model.get(this.column.get("name")));
-    this.$el.append($("<a>", {
-      tabIndex: -1,
-      href: "mailto:" + formattedValue,
-      title: formattedValue
-    }).text(formattedValue));
+    var a = document.createElement("a");
+    a.tabIndex = -1;
+    a.href = "mailto:" + formattedValue;
+    a.title = formattedValue;
+    a.appendChild(document.createTextNode(formattedValue));
+    this.el.appendChild(a);
     this.delegateEvents();
     return this;
   }
@@ -672,11 +691,11 @@ var BooleanCell = Backgrid.BooleanCell = Cell.extend({
   */
   render: function () {
     this.$el.empty();
-    this.$el.append($("<input>", {
-      tabIndex: -1,
-      type: "checkbox",
-      checked: this.formatter.fromRaw(this.model.get(this.column.get("name")))
-    }));
+    var input = document.createElement("input");
+    input.tabIndex = -1;
+    input.type = "checkbox";
+    input.checked = this.formatter.fromRaw(this.model.get(this.column.get("name")));
+    this.el.appendChild(input);
     this.delegateEvents();
     return this;
   }
@@ -886,7 +905,7 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
           var optionValue = optionValue[1];
 
           if (optionValue == rawData) {
-            this.$el.append(optionText);
+            this.el.appendChild(document.createTextNode(optionText));
             break;
           }
         }
@@ -895,7 +914,7 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
           for (var j = 0; j < optionGroupValues.length; j++) {
             var optionGroupValue = optionGroupValues[j];
             if (optionGroupValue[1] == rawData) {
-              this.$el.append(optionGroupValue[0]);
+              this.el.appendChild(document.createTextNode(optionGroupValue[0]));
               break;
             }
           }
