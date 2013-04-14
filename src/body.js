@@ -172,46 +172,34 @@ var Body = Backgrid.Body = Backbone.View.extend({
   */
   render: function (collection) {
 
-    // console.time("empty rows");
     var el = this.el;
     var firstChild = el.firstChild;
     while(firstChild = el.firstChild) {
       el.removeChild(firstChild);
     }
-    // console.timeEnd("empty rows");
 
-    // console.time("reset collection");
     if (collection && collection != this.collection) {
       this.stopListening(this.collection);
       this.collection = collection;
       this._listenToCollection(collection);
     }
-    // console.timeEnd("reset collection");
 
-    // console.time("render rows");
     var rows = this.rows, fragment = document.createDocumentFragment();
     for (var i = 0, l = rows.length; i < l; i++) {
       fragment.appendChild(rows[i].render(collection && collection.at(i)).el);
     }
     this.el.appendChild(fragment);
-    // console.timeEnd("render rows");
 
-    // console.time("gc old rows");
     if (this.rows.length != this.collection.length) {
       for (var i = 0; i < this.rows.length - this.collection.length; i++) {
         this.rows[this.rows.length - i - 1].remove();
       }
       this.rows.splice(collection.length - 1, this.rows.length - this.collection.length);
     }
-    // console.timeEnd("gc old rows");
 
-    // console.time("redelegate events");
     if (this.events) this.delegateEvents();
-    // console.timeEnd("redelegate events");
 
-    // console.time("trigger refresh event");
     if (collection) collection.trigger("backgrid:refresh", this);
-    // console.timeEnd("trigger refresh event");
 
     return this;
   },
