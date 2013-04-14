@@ -377,7 +377,12 @@ var UriCell = Backgrid.UriCell = Cell.extend({
   className: "uri-cell",
 
   render: function () {
-    this.$el.empty();
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
+    }
+
     var formattedValue = this.formatter.fromRaw(this.model.get(this.column.get("name")));
     var a = document.createElement("a");
     a.tabIndex = -1;
@@ -385,8 +390,10 @@ var UriCell = Backgrid.UriCell = Cell.extend({
     a.title = formattedValue;
     a.target = "_blank";
     a.appendChild(document.createTextNode(formattedValue));
-    this.el.appendChild(a);
+    el.appendChild(a);
+
     this.delegateEvents();
+
     return this;
   }
 
@@ -408,15 +415,22 @@ var EmailCell = Backgrid.EmailCell = StringCell.extend({
   formatter: new EmailFormatter(),
 
   render: function () {
-    this.$el.empty();
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
+    }
+
     var formattedValue = this.formatter.fromRaw(this.model.get(this.column.get("name")));
     var a = document.createElement("a");
     a.tabIndex = -1;
     a.href = "mailto:" + formattedValue;
     a.title = formattedValue;
     a.appendChild(document.createTextNode(formattedValue));
-    this.el.appendChild(a);
+    el.appendChild(a);
+
     this.delegateEvents();
+
     return this;
   }
 
@@ -690,13 +704,20 @@ var BooleanCell = Backgrid.BooleanCell = Cell.extend({
      uncheck otherwise.
   */
   render: function () {
-    this.$el.empty();
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
+    }
+
     var input = document.createElement("input");
     input.tabIndex = -1;
     input.type = "checkbox";
     input.checked = this.formatter.fromRaw(this.model.get(this.column.get("name")));
     this.el.appendChild(input);
+
     this.delegateEvents();
+
     return this;
   }
 
@@ -889,7 +910,11 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
      @throws {TypeError} If `optionValues` is malformed.
   */
   render: function () {
-    this.$el.empty();
+    var el = this.el;
+    var firstChild = el.firstChild;
+    while(firstChild = el.firstChild) {
+      el.removeChild(firstChild);
+    }
 
     var optionValues = this.optionValues;
     var rawData = this.formatter.fromRaw(this.model.get(this.column.get("name")));
@@ -905,7 +930,7 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
           var optionValue = optionValue[1];
 
           if (optionValue == rawData) {
-            this.el.appendChild(document.createTextNode(optionText));
+            el.appendChild(document.createTextNode(optionText));
             break;
           }
         }
@@ -914,7 +939,7 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
           for (var j = 0; j < optionGroupValues.length; j++) {
             var optionGroupValue = optionGroupValues[j];
             if (optionGroupValue[1] == rawData) {
-              this.el.appendChild(document.createTextNode(optionGroupValue[0]));
+              el.appendChild(document.createTextNode(optionGroupValue[0]));
               break;
             }
           }
